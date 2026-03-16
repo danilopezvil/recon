@@ -45,7 +45,7 @@ class PreviewPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               PrimaryAction(
-                label: 'Analizar (mock)',
+                label: 'Analizar',
                 isBusy: state.isLoading,
                 onPressed: () async {
                   final ok = await controller.analyze();

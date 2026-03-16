@@ -1,7 +1,11 @@
-import '../../domain/models/analyzed_item.dart';
+import '../../domain/models/analyze_draft_result.dart';
+import '../../domain/models/confirm_draft_payload.dart';
 import '../../domain/models/publish_payload.dart';
+import '../../domain/models/published_item.dart';
 
 abstract class ItemRemoteDataSource {
-  Future<AnalyzedItem> analyzeItem(String imagePath);
-  Future<bool> publishItem(PublishPayload payload);
+  Future<AnalyzeDraftResult> analyzeItem(String imagePath);
+  Future<PublishedItem> confirmDraft(ConfirmDraftPayload payload);
+  Future<PublishedItem> createItem(PublishPayload payload);
+  Future<List<String>> uploadItemImages({required String itemId, required List<String> imagePaths});
 }

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recon_mobile_app/data/local/history_local_store.dart';
-import 'package:recon_mobile_app/domain/models/analyzed_item.dart';
 import 'package:recon_mobile_app/domain/models/process_result.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,20 +13,17 @@ void main() {
 
       final older = ProcessResult(
         id: '1',
-        item: const AnalyzedItem(
-          title: 'A',
-          price: 1,
-          category: 'books',
-          condition: 'good',
-          pickupArea: 'X',
-          description: 'x',
-        ),
-        imagePath: '/a.jpg',
-        imageBytes: 100,
-        published: true,
-        createdAt: DateTime.parse('2024-01-01T00:00:00.000Z'),
+        flowType: 'ai_assisted',
+        imageUrl: 'a',
+        title: 'A',
+        category: 'books',
+        condition: 'good',
+        price: 1,
+        pickupArea: 'X',
+        publishedAt: DateTime.parse('2024-01-01T00:00:00.000Z'),
+        success: true,
       );
-      final newer = older.copyWith(id: '2', createdAt: DateTime.parse('2024-01-03T00:00:00.000Z'));
+      final newer = older.copyWith(id: '2', publishedAt: DateTime.parse('2024-01-03T00:00:00.000Z'));
 
       await store.save(older);
       await store.save(newer);
@@ -45,18 +41,15 @@ void main() {
         await store.save(
           ProcessResult(
             id: '$i',
-            item: const AnalyzedItem(
-              title: 'T',
-              price: 1,
-              category: 'c',
-              condition: 'good',
-              pickupArea: 'p',
-              description: 'd',
-            ),
-            imagePath: '/$i.jpg',
-            imageBytes: 10,
-            published: true,
-            createdAt: DateTime.now().add(Duration(minutes: i)),
+            flowType: 'manual',
+            imageUrl: '/$i.jpg',
+            title: 'T',
+            category: 'c',
+            condition: 'good',
+            price: i,
+            pickupArea: 'p',
+            publishedAt: DateTime.now().add(Duration(minutes: i)),
+            success: true,
           ),
         );
       }
