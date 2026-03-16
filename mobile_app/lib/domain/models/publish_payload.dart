@@ -11,27 +11,9 @@ class PublishPayload {
   final String localImagePath;
   final DateTime createdAt;
 
-  PublishPayload copyWith({
-    AnalyzedItem? item,
-    String? localImagePath,
-    DateTime? createdAt,
-  }) {
-    return PublishPayload(
-      item: item ?? this.item,
-      localImagePath: localImagePath ?? this.localImagePath,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
   Map<String, dynamic> toJson() => {
-        'item': item.toJson(),
+        ...item.toJson(),
         'local_image_path': localImagePath,
         'created_at': createdAt.toIso8601String(),
       };
-
-  factory PublishPayload.fromJson(Map<String, dynamic> json) => PublishPayload(
-        item: AnalyzedItem.fromJson(Map<String, dynamic>.from(json['item'] as Map)),
-        localImagePath: json['local_image_path'] as String? ?? '',
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0),
-      );
 }

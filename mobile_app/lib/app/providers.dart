@@ -5,7 +5,6 @@ import '../data/datasources/item_remote_data_source.dart';
 import '../data/datasources/mock_item_remote_data_source.dart';
 import '../data/local/history_local_store.dart';
 import '../data/repositories/item_processing_repository.dart';
-import '../domain/models/process_result.dart';
 import '../domain/repositories/history_repository.dart';
 import '../domain/services/item_processing_service.dart';
 import '../features/capture/application/workflow_controller.dart';
@@ -22,10 +21,6 @@ final itemProcessingServiceProvider = Provider<ItemProcessingService>(
 
 final historyRepositoryProvider = Provider<HistoryRepository>(
   (ref) => HistoryLocalStore(),
-);
-
-final historyProvider = FutureProvider<List<ProcessResult>>(
-  (ref) => ref.read(historyRepositoryProvider).getAll(),
 );
 
 final workflowControllerProvider = StateNotifierProvider<WorkflowController, WorkflowState>(

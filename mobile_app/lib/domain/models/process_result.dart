@@ -19,26 +19,6 @@ class ProcessResult {
   final DateTime createdAt;
   final String? message;
 
-  ProcessResult copyWith({
-    String? id,
-    AnalyzedItem? item,
-    String? imagePath,
-    int? imageBytes,
-    bool? published,
-    DateTime? createdAt,
-    String? message,
-  }) {
-    return ProcessResult(
-      id: id ?? this.id,
-      item: item ?? this.item,
-      imagePath: imagePath ?? this.imagePath,
-      imageBytes: imageBytes ?? this.imageBytes,
-      published: published ?? this.published,
-      createdAt: createdAt ?? this.createdAt,
-      message: message ?? this.message,
-    );
-  }
-
   Map<String, dynamic> toJson() => {
         'id': id,
         'item': item.toJson(),
@@ -50,12 +30,12 @@ class ProcessResult {
       };
 
   factory ProcessResult.fromJson(Map<String, dynamic> json) => ProcessResult(
-        id: json['id'] as String? ?? '',
-        item: AnalyzedItem.fromJson(Map<String, dynamic>.from(json['item'] as Map? ?? <String, dynamic>{})),
-        imagePath: json['image_path'] as String? ?? '',
-        imageBytes: (json['image_bytes'] as num?)?.toInt() ?? 0,
-        published: json['published'] as bool? ?? false,
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0),
+        id: json['id'] as String,
+        item: AnalyzedItem.fromJson(Map<String, dynamic>.from(json['item'] as Map)),
+        imagePath: json['image_path'] as String,
+        imageBytes: (json['image_bytes'] as num).toInt(),
+        published: json['published'] as bool,
+        createdAt: DateTime.parse(json['created_at'] as String),
         message: json['message'] as String?,
       );
 }

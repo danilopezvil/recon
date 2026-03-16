@@ -16,11 +16,9 @@ class PreviewPage extends ConsumerWidget {
     final state = ref.watch(workflowControllerProvider);
     final controller = ref.read(workflowControllerProvider.notifier);
 
-    if (state.imagePath == null || state.optimization == null) {
+    if (state.imagePath == null) {
       return const Scaffold(body: Center(child: Text('No hay imagen seleccionada')));
     }
-
-    final opt = state.optimization!;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Vista previa')),
@@ -28,7 +26,6 @@ class PreviewPage extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: ClipRRect(
@@ -38,14 +35,11 @@ class PreviewPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               AppSection(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _line('Original', '${(opt.originalBytes / 1024).toStringAsFixed(1)} KB'),
-                    _line('Final', '${(opt.finalBytes / 1024).toStringAsFixed(1)} KB'),
-                    _line('Resolución usada', '${opt.finalWidth}x${opt.finalHeight}'),
-                    _line('Intentos', '${opt.attempts}'),
-                    _line('Objetivo ≤50KB', opt.targetReached ? 'Sí' : 'No (se mantuvo legibilidad)'),
+                    const Text('Peso final'),
+                    Text('${((state.imageBytes ?? 0) / 1024).toStringAsFixed(1)} KB'),
                   ],
                 ),
               ),
@@ -60,23 +54,9 @@ class PreviewPage extends ConsumerWidget {
                   }
                 },
               ),
-              if (state.error != null) ...[
-                const SizedBox(height: 8),
-                Text(state.error!, style: const TextStyle(color: Colors.redAccent)),
-              ],
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _line(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(label), Text(value, style: const TextStyle(fontWeight: FontWeight.w600))],
       ),
     );
   }

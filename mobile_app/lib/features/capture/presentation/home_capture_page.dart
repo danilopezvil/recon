@@ -32,19 +32,8 @@ class HomeCapturePage extends ConsumerWidget {
             children: [
               const Text('Foto del artículo', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
-              const Text('Captura, revisa y publica rápido. Flujo optimizado para varios objetos seguidos.'),
-              const SizedBox(height: 12),
-              if (state.lastPublished != null)
-                AppSection(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(child: Text('Último envío: ${state.lastPublished!.item.title}')),
-                      const Icon(Icons.check_circle, color: Colors.green),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 12),
+              const Text('Elige cámara o galería. La app comprimirá automáticamente a 50 KB o menos.'),
+              const SizedBox(height: 18),
               AppSection(
                 child: Column(
                   children: [

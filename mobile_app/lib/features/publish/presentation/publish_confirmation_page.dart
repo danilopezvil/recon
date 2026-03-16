@@ -14,8 +14,6 @@ class PublishConfirmationPage extends ConsumerWidget {
     final state = ref.watch(workflowControllerProvider);
     final controller = ref.read(workflowControllerProvider.notifier);
 
-    final isPublished = state.lastPublished != null && state.step == WorkflowStep.published;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Publicación')),
       body: Padding(
@@ -23,56 +21,29 @@ class PublishConfirmationPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              isPublished ? 'Publicado (simulado)' : 'Listo para enviar',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-            ),
+            const Text('Listo para enviar', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text(
-              isPublished
-                  ? 'Puedes volver al inicio para capturar otro artículo.'
-                  : 'Publicación simulada. La integración real se conectará en la siguiente fase.',
-            ),
+            const Text('En esta fase la publicación es simulada. El contrato remoto ya está preparado.'),
             const SizedBox(height: 12),
             AppSection(
               child: Text(state.analyzedItem?.title ?? 'Sin título'),
             ),
             const Spacer(),
-            if (!isPublished)
-              PrimaryAction(
-                label: 'Publicar (simulado)',
-                isBusy: state.isLoading,
-                onPressed: () async {
-                  await controller.publish();
-                },
-              )
-            else
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        controller.resetFlow();
-                        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
-                      },
-                      child: const Text('Nuevo artículo'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.history),
-                      child: const Text('Ver historial'),
-                    ),
-                  ),
-                ],
-              ),
-            if (state.error != null) ...[
-              const SizedBox(height: 10),
-              Text(state.error!, style: const TextStyle(color: Colors.redAccent)),
-            ],
+            PrimaryAction(
+              label: 'Publicar (simulado)',
+              isBusy: state.isLoading,
+              onPressed: () async {
+                final ok = await controller.publish();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(ok ? 'Publicado (mock)' : 'No se pudo publicar')),
+                );
+                if (ok) {
+                  controller.resetFlow();
+                  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
+                }
+              },
+            ),
           ],
         ),
       ),

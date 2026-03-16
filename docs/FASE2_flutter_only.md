@@ -71,15 +71,6 @@ mobile_app/
         app_section.dart
         primary_action.dart
     main.dart
-  test/
-    core/
-      image_optimizer_test.dart
-    data/
-      history_local_store_test.dart
-    features/
-      workflow_controller_test.dart
-    models/
-      models_serialization_test.dart
   pubspec.yaml
 ```
 
@@ -98,18 +89,18 @@ Ya incluidas en `pubspec.yaml`:
 
 1. Home: tomar foto o elegir de galería.
 2. Compresión iterativa hasta ~50KB objetivo.
-3. Vista previa de imagen + métricas de compresión.
+3. Vista previa de imagen + tamaño final.
 4. Análisis simulado por mock/fake.
 5. Mostrar JSON resultado.
 6. Edición manual del JSON.
-7. Publicación simulada + confirmación local.
-8. Guardado en historial local (ordenado desc, máximo 50 registros).
+7. Publicación simulada.
+8. Guardado en historial local.
 
 ## 5) Capa de integración futura (preparada)
 
 - Contrato principal:
   - `analyzeItem(image)`
-  - `publishItem(payload)`
+  - `publishItem(payload, image)`
 - Implementaciones:
   - `MockItemRemoteDataSource` (actual)
   - `HttpItemRemoteDataSource` (placeholder con `UnimplementedError` para conectar API real)
@@ -120,8 +111,8 @@ Ya incluidas en `pubspec.yaml`:
 ```bash
 cd mobile_app
 flutter pub get
-flutter test
 flutter run
 ```
 
 > Nota: cámara/galería requiere ejecutar en emulador o dispositivo con permisos adecuados.
+
