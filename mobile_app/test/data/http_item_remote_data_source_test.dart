@@ -12,6 +12,7 @@ class _FakeAdapter implements HttpClientAdapter {
 
   final bool failAnalyzeOnce;
   int analyzeCalls = 0;
+  RequestOptions? lastAnalyzeRequest;
 
   @override
   void close({bool force = false}) {}
@@ -19,6 +20,7 @@ class _FakeAdapter implements HttpClientAdapter {
   @override
   Future<ResponseBody> fetch(RequestOptions requestOptions, Stream<List<int>>? requestStream, Future<void>? cancelFuture) async {
     if (requestOptions.path == '/api/items/analyze') {
+      lastAnalyzeRequest = requestOptions;
       analyzeCalls += 1;
       if (failAnalyzeOnce && analyzeCalls == 1) {
         throw DioException(type: DioExceptionType.connectionError, requestOptions: requestOptions);
@@ -43,7 +45,7 @@ class _FakeAdapter implements HttpClientAdapter {
 }
 
 void main() {
-  test('analyze and confirm parse responses', () async {
+  test('analyze sends multipart image field with filename and parses response', () async {
     final adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://example.com'));
     dio.httpClientAdapter = adapter;
@@ -55,6 +57,11 @@ void main() {
 
     final analyzed = await ds.analyzeItem(file.path);
     expect(analyzed.draftId, 'd1');
+
+    final formData = adapter.lastAnalyzeRequest?.data as FormData;
+    expect(formData.files.single.key, 'image');
+    expect(formData.files.single.value.filename, 'a.jpg');
+    expect(formData.files.single.value.contentType?.mimeType, 'image/jpeg');
 
     final published = await ds.confirmDraft(
       ConfirmDraftPayload(

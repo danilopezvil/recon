@@ -1,4 +1,6 @@
 class ProcessResult {
+  static const int schemaVersion = 1;
+
   const ProcessResult({
     required this.id,
     required this.flowType,
@@ -75,9 +77,11 @@ class ProcessResult {
         'published_at': publishedAt.toIso8601String(),
         'success': success,
         'message': message,
+        'schema_version': schemaVersion,
       };
 
-  factory ProcessResult.fromJson(Map<String, dynamic> json) => ProcessResult(
+  factory ProcessResult.fromJson(Map<String, dynamic> json) {
+    return ProcessResult(
         id: json['id'] as String,
         flowType: json['flow_type'] as String? ?? 'ai_assisted',
         draftId: json['draft_id'] as String?,
@@ -92,4 +96,5 @@ class ProcessResult {
         success: json['success'] as bool? ?? false,
         message: json['message'] as String?,
       );
+  }
 }
