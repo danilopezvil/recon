@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
+import '../../core/logging/app_logger.dart';
 import '../../core/network/api_error.dart';
 import '../../domain/models/analyze_draft_result.dart';
 import '../../domain/models/confirm_draft_payload.dart';
@@ -16,28 +19,46 @@ class HttpItemRemoteDataSource implements ItemRemoteDataSource {
 
   @override
   Future<AnalyzeDraftResult> analyzeItem(String imagePath) async {
+    AppLogger.info('Analyze request started imagePath=$imagePath', tag: 'WORKFLOW');
     try {
-      final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(imagePath),
+      final response = await _retryAnalyze(() async {
+        final formData = FormData.fromMap({
+          'image': await MultipartFile.fromFile(imagePath),
+        });
+        return _dio.post<Map<String, dynamic>>('/api/items/analyze', data: formData);
       });
-      final response = await _dio.post<Map<String, dynamic>>('/api/items/analyze', data: formData);
       final dto = AnalyzeResponseDto.fromJson(response.data ?? const {});
-      return mapAnalyzeResponseToDomain(dto);
-    } catch (e) {
-      throw mapDioError(e);
+      final result = mapAnalyzeResponseToDomain(dto);
+      AppLogger.info('Analyze request success draftId=${result.draftId}', tag: 'WORKFLOW');
+      return result;
+    } catch (e, st) {
+      if (e is FormatException || e is TypeError) {
+        AppLogger.error('Analyze serialization error', error: e, stackTrace: st, tag: 'WORKFLOW');
+      }
+      final mapped = mapDioError(e);
+      AppLogger.warn('Analyze request failed: ${mapped.message}', tag: 'WORKFLOW');
+      throw mapped;
     }
   }
 
   @override
   Future<PublishedItem> confirmDraft(ConfirmDraftPayload payload) async {
+    AppLogger.info('Confirm request started draftId=${payload.draftId}', tag: 'WORKFLOW');
     try {
       final body = mapConfirmPayloadToDto(payload).toJson();
       final response = await _dio.post<Map<String, dynamic>>('/api/items/confirm', data: body);
       final data = Map<String, dynamic>.from((response.data ?? const {})['data'] as Map? ?? {});
       final dto = PublishedItemDto.fromJson(data);
-      return mapPublishedItemToDomain(dto);
-    } catch (e) {
-      throw mapDioError(e);
+      final result = mapPublishedItemToDomain(dto);
+      AppLogger.info('Confirm request success itemId=${result.id}', tag: 'WORKFLOW');
+      return result;
+    } catch (e, st) {
+      if (e is FormatException || e is TypeError) {
+        AppLogger.error('Confirm serialization error', error: e, stackTrace: st, tag: 'WORKFLOW');
+      }
+      final mapped = mapDioError(e);
+      AppLogger.warn('Confirm request failed: ${mapped.message}', tag: 'WORKFLOW');
+      throw mapped;
     }
   }
 
@@ -69,5 +90,36 @@ class HttpItemRemoteDataSource implements ItemRemoteDataSource {
     } catch (e) {
       throw mapDioError(e);
     }
+  }
+
+  Future<Response<Map<String, dynamic>>> _retryAnalyze(
+    Future<Response<Map<String, dynamic>>> Function() action,
+  ) async {
+    const maxAttempts = 2;
+    var attempt = 0;
+
+    while (true) {
+      attempt += 1;
+      try {
+        return await action();
+      } catch (e) {
+        final shouldRetry = attempt < maxAttempts && _isRetryableAnalyzeError(e);
+        if (!shouldRetry) rethrow;
+        AppLogger.warn('Analyze retry attempt=$attempt', tag: 'WORKFLOW');
+        await Future<void>.delayed(Duration(milliseconds: 250 * attempt));
+      }
+    }
+  }
+
+  bool _isRetryableAnalyzeError(Object error) {
+    if (error is! DioException) return false;
+    if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout) {
+      return true;
+    }
+    final code = error.response?.statusCode;
+    return code != null && code >= 500;
   }
 }
