@@ -11,7 +11,8 @@ class HomeCapturePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workflowControllerProvider);
+    final isLoading = ref.watch(workflowControllerProvider.select((s) => s.isLoading));
+    final error = ref.watch(workflowControllerProvider.select((s) => s.error));
     final controller = ref.read(workflowControllerProvider.notifier);
 
     return Scaffold(
@@ -39,7 +40,7 @@ class HomeCapturePage extends ConsumerWidget {
                   children: [
                     PrimaryAction(
                       label: 'Tomar foto',
-                      isBusy: state.isLoading,
+                      isBusy: isLoading,
                       onPressed: () async {
                         final ok = await controller.pickFromCamera();
                         if (ok && context.mounted) {
@@ -49,7 +50,7 @@ class HomeCapturePage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton(
-                      onPressed: state.isLoading
+                      onPressed: isLoading
                           ? null
                           : () async {
                               final ok = await controller.pickFromGallery();
@@ -62,9 +63,9 @@ class HomeCapturePage extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (state.error != null) ...[
+              if (error != null) ...[
                 const SizedBox(height: 12),
-                Text(state.error!, style: const TextStyle(color: Colors.redAccent)),
+                Text(error, style: const TextStyle(color: Colors.redAccent)),
               ],
             ],
           ),

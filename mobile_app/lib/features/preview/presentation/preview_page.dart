@@ -13,7 +13,9 @@ class PreviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workflowControllerProvider);
+    final state = ref.watch(workflowControllerProvider.select(
+      (s) => (imagePath: s.imagePath, imageBytes: s.imageBytes, isLoading: s.isLoading),
+    ));
     final controller = ref.read(workflowControllerProvider.notifier);
 
     if (state.imagePath == null) {

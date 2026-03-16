@@ -13,6 +13,8 @@ class PublishConfirmationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(workflowControllerProvider);
     final controller = ref.read(workflowControllerProvider.notifier);
+    final blockedSeconds = state.confirmRetryRemaining?.inSeconds;
+    final isRetryBlocked = state.isConfirmRetryBlocked;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Publicación')),
@@ -28,21 +30,37 @@ class PublishConfirmationPage extends ConsumerWidget {
             AppSection(
               child: Text(state.analyzedItem?.title ?? 'Sin título'),
             ),
+            if (isRetryBlocked) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Acción bloqueada por rate limit. Espera ${blockedSeconds ?? 0}s.',
+                style: const TextStyle(color: Colors.orange),
+              ),
+            ],
             const Spacer(),
             PrimaryAction(
-              label: 'Confirmar y publicar',
+              label: isRetryBlocked ? 'Bloqueado temporalmente' : 'Confirmar y publicar',
               isBusy: state.isLoading,
-              onPressed: () async {
-                final ok = await controller.publish();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(ok ? 'Publicado correctamente' : (ref.read(workflowControllerProvider).error ?? 'No se pudo publicar'))),
-                );
-                if (ok) {
-                  controller.resetFlow();
-                  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
-                }
-              },
+              onPressed: isRetryBlocked
+                  ? null
+                  : () async {
+                      final ok = await controller.publish();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ok ? 'Publicado correctamente' : (ref.read(workflowControllerProvider).error ?? 'No se pudo publicar'))),
+                      );
+                    },
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: state.isLoading
+                  ? null
+                  : () async {
+                      await controller.startNextItem();
+                      if (!context.mounted) return;
+                      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
+                    },
+              child: const Text('Publicar y continuar con otro artículo'),
             ),
           ],
         ),

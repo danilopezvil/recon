@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recon_mobile_app/data/local/history_local_store.dart';
 import 'package:recon_mobile_app/domain/models/process_result.dart';
@@ -56,6 +58,60 @@ void main() {
 
       final all = await store.getAll();
       expect(all.length, 50);
+    });
+
+    test('skips corrupted entries and keeps valid data', () async {
+      final valid = ProcessResult(
+        id: 'ok',
+        flowType: 'manual',
+        imageUrl: '/ok.jpg',
+        title: 'Valid',
+        category: 'books',
+        condition: 'good',
+        price: 10,
+        pickupArea: 'X',
+        publishedAt: DateTime.parse('2024-01-03T00:00:00.000Z'),
+        success: true,
+      );
+
+      SharedPreferences.setMockInitialValues({
+        'processed_history_v3': [
+          jsonEncode(valid.toJson()),
+          '{bad json',
+        ],
+      });
+
+      final store = HistoryLocalStore();
+      final all = await store.getAll();
+      expect(all.length, 1);
+      expect(all.first.id, 'ok');
+    });
+
+    test('migrates v2 key into v3 key', () async {
+      final valid = ProcessResult(
+        id: 'legacy',
+        flowType: 'manual',
+        imageUrl: '/legacy.jpg',
+        title: 'Legacy',
+        category: 'books',
+        condition: 'good',
+        price: 10,
+        pickupArea: 'X',
+        publishedAt: DateTime.parse('2024-01-03T00:00:00.000Z'),
+        success: true,
+      );
+
+      SharedPreferences.setMockInitialValues({
+        'processed_history_v2': [jsonEncode(valid.toJson())],
+      });
+
+      final store = HistoryLocalStore();
+      final all = await store.getAll();
+      expect(all.length, 1);
+      expect(all.first.id, 'legacy');
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getStringList('processed_history_v3'), isNotNull);
     });
   });
 }

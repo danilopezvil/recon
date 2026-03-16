@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:recon_mobile_app/core/network/api_error.dart';
 import 'package:recon_mobile_app/core/utils/image_optimizer.dart';
 import 'package:recon_mobile_app/domain/models/analyze_draft_result.dart';
 import 'package:recon_mobile_app/domain/models/analyzed_item.dart';
@@ -13,33 +14,44 @@ import 'package:recon_mobile_app/domain/services/item_processing_service.dart';
 import 'package:recon_mobile_app/features/capture/application/workflow_controller.dart';
 
 class _FakeService implements ItemProcessingService {
-  @override
-  Future<AnalyzeDraftResult> analyzeItem(String imagePath) async => const AnalyzeDraftResult(
-        draftId: 'd1',
-        imageUrl: 'https://img',
-        suggestion: AnalyzedItem(
-          title: 'Mock item',
-          price: 22,
-          category: 'home',
-          condition: 'good',
-          pickupArea: '',
-          description: 'desc',
-        ),
-      );
+  _FakeService({this.throwOnAnalyze, this.throwOnConfirm});
+
+  final Exception? throwOnAnalyze;
+  final Exception? throwOnConfirm;
 
   @override
-  Future<PublishedItem> confirmDraft(ConfirmDraftPayload payload) async => PublishedItem(
-        id: 'p1',
-        title: payload.item.title,
-        description: payload.item.description,
-        price: payload.item.price,
-        category: payload.item.category,
-        condition: payload.item.condition,
-        pickupArea: payload.item.pickupArea,
-        status: 'available',
-        createdAt: DateTime.now(),
-        images: const [],
-      );
+  Future<AnalyzeDraftResult> analyzeItem(String imagePath) async {
+    if (throwOnAnalyze != null) throw throwOnAnalyze!;
+    return const AnalyzeDraftResult(
+      draftId: 'd1',
+      imageUrl: 'https://img',
+      suggestion: AnalyzedItem(
+        title: 'Mock item',
+        price: 22,
+        category: 'home',
+        condition: 'good',
+        pickupArea: '',
+        description: 'desc',
+      ),
+    );
+  }
+
+  @override
+  Future<PublishedItem> confirmDraft(ConfirmDraftPayload payload) async {
+    if (throwOnConfirm != null) throw throwOnConfirm!;
+    return PublishedItem(
+      id: 'p1',
+      title: payload.item.title,
+      description: payload.item.description,
+      price: payload.item.price,
+      category: payload.item.category,
+      condition: payload.item.condition,
+      pickupArea: payload.item.pickupArea,
+      status: 'available',
+      createdAt: DateTime.now(),
+      images: const [],
+    );
+  }
 
   @override
   Future<PublishedItem> createItem(PublishPayload payload) {
@@ -93,5 +105,67 @@ void main() {
     expect(published, isTrue);
     expect(controller.state.step, WorkflowStep.publishedSuccess);
     expect(history.items.length, 1);
+  });
+
+  test('publish blocks retry window when API returns rate limit', () async {
+    final history = _MemoryHistoryRepository();
+    final controller = WorkflowController(
+      _FakeService(
+        throwOnConfirm: const ApiException(
+          'Demasiadas solicitudes. Reintenta en 30s.',
+          kind: ApiErrorKind.rateLimited,
+          rateLimit: RateLimitInfo(retryAfter: Duration(seconds: 30)),
+        ),
+      ),
+      history,
+    );
+
+    controller.setPreparedImage(
+      imagePath: '/tmp/item.jpg',
+      optimization: ImageOptimizationResult(
+        file: File('/tmp/item.jpg'),
+        originalBytes: 120000,
+        finalBytes: 48000,
+        finalWidth: 1024,
+        finalHeight: 1024,
+        targetReached: true,
+        attempts: 3,
+      ),
+    );
+    await controller.analyze();
+    controller.updateAnalyzedItem(controller.state.analyzedItem!.copyWith(pickupArea: 'Downtown'));
+
+    final result = await controller.publish();
+    expect(result, isFalse);
+    expect(controller.state.isConfirmRetryBlocked, isTrue);
+  });
+
+  test('analyze returns connectivity message on network error', () async {
+    final controller = WorkflowController(
+      _FakeService(
+        throwOnAnalyze: const ApiException(
+          'Sin conexión o red inestable. Verifica internet e intenta de nuevo.',
+          kind: ApiErrorKind.network,
+        ),
+      ),
+      _MemoryHistoryRepository(),
+    );
+
+    controller.setPreparedImage(
+      imagePath: '/tmp/item.jpg',
+      optimization: ImageOptimizationResult(
+        file: File('/tmp/item.jpg'),
+        originalBytes: 120000,
+        finalBytes: 48000,
+        finalWidth: 1024,
+        finalHeight: 1024,
+        targetReached: true,
+        attempts: 3,
+      ),
+    );
+
+    final analyzed = await controller.analyze();
+    expect(analyzed, isFalse);
+    expect(controller.state.error, contains('Sin conexión'));
   });
 }
