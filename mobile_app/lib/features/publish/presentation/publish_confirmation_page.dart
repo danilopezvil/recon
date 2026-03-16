@@ -23,20 +23,20 @@ class PublishConfirmationPage extends ConsumerWidget {
           children: [
             const Text('Listo para enviar', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text('En esta fase la publicación es simulada. El contrato remoto ya está preparado.'),
+            Text('Se confirmará el borrador ${state.draftId ?? ''} contra la API externa.'),
             const SizedBox(height: 12),
             AppSection(
               child: Text(state.analyzedItem?.title ?? 'Sin título'),
             ),
             const Spacer(),
             PrimaryAction(
-              label: 'Publicar (simulado)',
+              label: 'Confirmar y publicar',
               isBusy: state.isLoading,
               onPressed: () async {
                 final ok = await controller.publish();
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(ok ? 'Publicado (mock)' : 'No se pudo publicar')),
+                  SnackBar(content: Text(ok ? 'Publicado correctamente' : (ref.read(workflowControllerProvider).error ?? 'No se pudo publicar'))),
                 );
                 if (ok) {
                   controller.resetFlow();

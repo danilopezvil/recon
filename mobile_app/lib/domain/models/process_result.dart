@@ -1,41 +1,95 @@
-import 'analyzed_item.dart';
-
 class ProcessResult {
   const ProcessResult({
     required this.id,
-    required this.item,
-    required this.imagePath,
-    required this.imageBytes,
-    required this.published,
-    required this.createdAt,
+    required this.flowType,
+    this.draftId,
+    this.publishedItemId,
+    required this.imageUrl,
+    required this.title,
+    required this.category,
+    required this.condition,
+    required this.price,
+    required this.pickupArea,
+    required this.publishedAt,
+    required this.success,
     this.message,
   });
 
   final String id;
-  final AnalyzedItem item;
-  final String imagePath;
-  final int imageBytes;
-  final bool published;
-  final DateTime createdAt;
+  final String flowType;
+  final String? draftId;
+  final String? publishedItemId;
+  final String imageUrl;
+  final String title;
+  final String category;
+  final String condition;
+  final int price;
+  final String pickupArea;
+  final DateTime publishedAt;
+  final bool success;
   final String? message;
+
+  ProcessResult copyWith({
+    String? id,
+    String? flowType,
+    String? draftId,
+    String? publishedItemId,
+    String? imageUrl,
+    String? title,
+    String? category,
+    String? condition,
+    int? price,
+    String? pickupArea,
+    DateTime? publishedAt,
+    bool? success,
+    String? message,
+  }) {
+    return ProcessResult(
+      id: id ?? this.id,
+      flowType: flowType ?? this.flowType,
+      draftId: draftId ?? this.draftId,
+      publishedItemId: publishedItemId ?? this.publishedItemId,
+      imageUrl: imageUrl ?? this.imageUrl,
+      title: title ?? this.title,
+      category: category ?? this.category,
+      condition: condition ?? this.condition,
+      price: price ?? this.price,
+      pickupArea: pickupArea ?? this.pickupArea,
+      publishedAt: publishedAt ?? this.publishedAt,
+      success: success ?? this.success,
+      message: message ?? this.message,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'item': item.toJson(),
-        'image_path': imagePath,
-        'image_bytes': imageBytes,
-        'published': published,
-        'created_at': createdAt.toIso8601String(),
+        'flow_type': flowType,
+        'draft_id': draftId,
+        'published_item_id': publishedItemId,
+        'image_url': imageUrl,
+        'title': title,
+        'category': category,
+        'condition': condition,
+        'price': price,
+        'pickup_area': pickupArea,
+        'published_at': publishedAt.toIso8601String(),
+        'success': success,
         'message': message,
       };
 
   factory ProcessResult.fromJson(Map<String, dynamic> json) => ProcessResult(
         id: json['id'] as String,
-        item: AnalyzedItem.fromJson(Map<String, dynamic>.from(json['item'] as Map)),
-        imagePath: json['image_path'] as String,
-        imageBytes: (json['image_bytes'] as num).toInt(),
-        published: json['published'] as bool,
-        createdAt: DateTime.parse(json['created_at'] as String),
+        flowType: json['flow_type'] as String? ?? 'ai_assisted',
+        draftId: json['draft_id'] as String?,
+        publishedItemId: json['published_item_id'] as String?,
+        imageUrl: json['image_url'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        category: json['category'] as String? ?? '',
+        condition: json['condition'] as String? ?? '',
+        price: (json['price'] as num?)?.toInt() ?? 0,
+        pickupArea: json['pickup_area'] as String? ?? '',
+        publishedAt: DateTime.parse(json['published_at'] as String),
+        success: json['success'] as bool? ?? false,
         message: json['message'] as String?,
       );
 }

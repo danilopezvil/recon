@@ -31,9 +31,9 @@ class HistoryPage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(10),
                   side: const BorderSide(color: Color(0xFFE8EAEE)),
                 ),
-                title: Text(e.item.title),
-                subtitle: Text('${e.item.category} · ${e.item.condition} · ${e.item.price}€'),
-                trailing: Text('${(e.imageBytes / 1024).toStringAsFixed(1)} KB'),
+                title: Text(e.title),
+                subtitle: Text('${e.flowType} · ${e.category} · ${e.condition} · ${e.price}€'),
+                trailing: Text(e.success ? 'ok' : 'fail'),
               );
             },
             separatorBuilder: (_, __) => const SizedBox(height: 8),

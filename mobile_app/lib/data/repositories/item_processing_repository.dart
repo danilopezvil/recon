@@ -1,5 +1,7 @@
-import '../../domain/models/analyzed_item.dart';
+import '../../domain/models/analyze_draft_result.dart';
+import '../../domain/models/confirm_draft_payload.dart';
 import '../../domain/models/publish_payload.dart';
+import '../../domain/models/published_item.dart';
 import '../../domain/services/item_processing_service.dart';
 import '../datasources/item_remote_data_source.dart';
 
@@ -9,8 +11,16 @@ class ItemProcessingRepository implements ItemProcessingService {
   final ItemRemoteDataSource remote;
 
   @override
-  Future<AnalyzedItem> analyzeItem(String imagePath) => remote.analyzeItem(imagePath);
+  Future<AnalyzeDraftResult> analyzeItem(String imagePath) => remote.analyzeItem(imagePath);
 
   @override
-  Future<bool> publishItem(PublishPayload payload) => remote.publishItem(payload);
+  Future<PublishedItem> confirmDraft(ConfirmDraftPayload payload) => remote.confirmDraft(payload);
+
+  @override
+  Future<PublishedItem> createItem(PublishPayload payload) => remote.createItem(payload);
+
+  @override
+  Future<List<String>> uploadItemImages({required String itemId, required List<String> imagePaths}) {
+    return remote.uploadItemImages(itemId: itemId, imagePaths: imagePaths);
+  }
 }

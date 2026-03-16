@@ -2,26 +2,54 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recon_mobile_app/core/utils/image_optimizer.dart';
+import 'package:recon_mobile_app/domain/models/analyze_draft_result.dart';
 import 'package:recon_mobile_app/domain/models/analyzed_item.dart';
+import 'package:recon_mobile_app/domain/models/confirm_draft_payload.dart';
 import 'package:recon_mobile_app/domain/models/process_result.dart';
 import 'package:recon_mobile_app/domain/models/publish_payload.dart';
+import 'package:recon_mobile_app/domain/models/published_item.dart';
 import 'package:recon_mobile_app/domain/repositories/history_repository.dart';
 import 'package:recon_mobile_app/domain/services/item_processing_service.dart';
 import 'package:recon_mobile_app/features/capture/application/workflow_controller.dart';
 
 class _FakeService implements ItemProcessingService {
   @override
-  Future<AnalyzedItem> analyzeItem(String imagePath) async => const AnalyzedItem(
-        title: 'Mock item',
-        price: 22,
-        category: 'home',
-        condition: 'good',
-        pickupArea: 'Centro',
-        description: 'desc',
+  Future<AnalyzeDraftResult> analyzeItem(String imagePath) async => const AnalyzeDraftResult(
+        draftId: 'd1',
+        imageUrl: 'https://img',
+        suggestion: AnalyzedItem(
+          title: 'Mock item',
+          price: 22,
+          category: 'home',
+          condition: 'good',
+          pickupArea: '',
+          description: 'desc',
+        ),
       );
 
   @override
-  Future<bool> publishItem(PublishPayload payload) async => true;
+  Future<PublishedItem> confirmDraft(ConfirmDraftPayload payload) async => PublishedItem(
+        id: 'p1',
+        title: payload.item.title,
+        description: payload.item.description,
+        price: payload.item.price,
+        category: payload.item.category,
+        condition: payload.item.condition,
+        pickupArea: payload.item.pickupArea,
+        status: 'available',
+        createdAt: DateTime.now(),
+        images: const [],
+      );
+
+  @override
+  Future<PublishedItem> createItem(PublishPayload payload) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<String>> uploadItemImages({required String itemId, required List<String> imagePaths}) {
+    throw UnimplementedError();
+  }
 }
 
 class _MemoryHistoryRepository implements HistoryRepository {
@@ -37,7 +65,7 @@ class _MemoryHistoryRepository implements HistoryRepository {
 }
 
 void main() {
-  test('workflow transitions imageReady -> analyzed -> published', () async {
+  test('workflow transitions compressed -> draftReady -> publishedSuccess', () async {
     final history = _MemoryHistoryRepository();
     final controller = WorkflowController(_FakeService(), history);
 
@@ -54,16 +82,16 @@ void main() {
       ),
     );
 
-    expect(controller.state.step, WorkflowStep.imageReady);
+    expect(controller.state.step, WorkflowStep.imageCompressed);
 
     final analyzed = await controller.analyze();
     expect(analyzed, isTrue);
-    expect(controller.state.step, WorkflowStep.analyzed);
-    expect(controller.state.analyzedItem?.title, 'Mock item');
+    expect(controller.state.step, WorkflowStep.draftReady);
 
+    controller.updateAnalyzedItem(controller.state.analyzedItem!.copyWith(pickupArea: 'Downtown'));
     final published = await controller.publish();
     expect(published, isTrue);
-    expect(controller.state.step, WorkflowStep.published);
+    expect(controller.state.step, WorkflowStep.publishedSuccess);
     expect(history.items.length, 1);
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
+import '../../../features/capture/application/workflow_controller.dart';
 import '../../../domain/models/analyzed_item.dart';
 
 class ManualEditPage extends ConsumerStatefulWidget {
@@ -26,7 +27,7 @@ class _ManualEditPageState extends ConsumerState<ManualEditPage> {
     final item = ref.read(workflowControllerProvider).analyzedItem;
     _title = TextEditingController(text: item?.title ?? '');
     _price = TextEditingController(text: (item?.price ?? 0).toString());
-    _category = TextEditingController(text: item?.category ?? '');
+    _category = TextEditingController(text: item?.category ?? 'other');
     _condition = TextEditingController(text: item?.condition ?? 'good');
     _pickupArea = TextEditingController(text: item?.pickupArea ?? '');
     _description = TextEditingController(text: item?.description ?? '');
@@ -53,12 +54,22 @@ class _ManualEditPageState extends ConsumerState<ManualEditPage> {
           key: _formKey,
           child: ListView(
             children: [
-              _field(_title, 'Título'),
-              _field(_price, 'Precio', keyboardType: TextInputType.number),
-              _field(_category, 'Categoría'),
-              _field(_condition, 'Condición (new, like_new, good, fair, parts)'),
-              _field(_pickupArea, 'Zona de recogida'),
-              _field(_description, 'Descripción', maxLines: 4),
+              _field(_title, 'Título', validator: (value) => (value ?? '').trim().isEmpty ? 'Campo obligatorio' : null),
+              _field(_price, 'Precio', keyboardType: TextInputType.number, validator: (value) {
+                final price = int.tryParse((value ?? '').trim());
+                if (price == null || price < 0) return 'Debe ser >= 0';
+                return null;
+              }),
+              _field(_category, 'Categoría (kitchen, books, home, electronics, other)', validator: (value) {
+                if (!WorkflowController.validCategories.contains((value ?? '').trim())) return 'Categoría inválida';
+                return null;
+              }),
+              _field(_condition, 'Condición (new, like_new, good, fair, parts)', validator: (value) {
+                if (!WorkflowController.validConditions.contains((value ?? '').trim())) return 'Condición inválida';
+                return null;
+              }),
+              _field(_pickupArea, 'Zona de recogida', validator: (value) => (value ?? '').trim().isEmpty ? 'Campo obligatorio' : null),
+              _field(_description, 'Descripción (opcional)', maxLines: 4),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () {
@@ -89,6 +100,7 @@ class _ManualEditPageState extends ConsumerState<ManualEditPage> {
     String label, {
     TextInputType? keyboardType,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -97,7 +109,7 @@ class _ManualEditPageState extends ConsumerState<ManualEditPage> {
         keyboardType: keyboardType,
         maxLines: maxLines,
         decoration: InputDecoration(labelText: label),
-        validator: (value) => (value == null || value.trim().isEmpty) ? 'Campo obligatorio' : null,
+        validator: validator,
       ),
     );
   }

@@ -6,9 +6,6 @@ class AnalyzedItem {
     required this.condition,
     required this.pickupArea,
     required this.description,
-    this.author,
-    this.genre,
-    this.language,
   });
 
   final String title;
@@ -17,9 +14,6 @@ class AnalyzedItem {
   final String condition;
   final String pickupArea;
   final String description;
-  final String? author;
-  final String? genre;
-  final String? language;
 
   AnalyzedItem copyWith({
     String? title,
@@ -28,9 +22,6 @@ class AnalyzedItem {
     String? condition,
     String? pickupArea,
     String? description,
-    String? author,
-    String? genre,
-    String? language,
   }) {
     return AnalyzedItem(
       title: title ?? this.title,
@@ -39,33 +30,24 @@ class AnalyzedItem {
       condition: condition ?? this.condition,
       pickupArea: pickupArea ?? this.pickupArea,
       description: description ?? this.description,
-      author: author ?? this.author,
-      genre: genre ?? this.genre,
-      language: language ?? this.language,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'title': title,
+        'description': description,
         'price': price,
         'category': category,
         'condition': condition,
         'pickup_area': pickupArea,
-        'description': description,
-        if (author != null && author!.isNotEmpty) 'author': author,
-        if (genre != null && genre!.isNotEmpty) 'genre': genre,
-        if (language != null && language!.isNotEmpty) 'language': language,
       };
 
   factory AnalyzedItem.fromJson(Map<String, dynamic> json) => AnalyzedItem(
         title: json['title'] as String? ?? '',
+        description: json['description'] as String? ?? '',
         price: (json['price'] as num?)?.toInt() ?? 0,
         category: json['category'] as String? ?? '',
-        condition: json['condition'] as String? ?? 'good',
+        condition: json['condition'] as String? ?? '',
         pickupArea: json['pickup_area'] as String? ?? '',
-        description: json['description'] as String? ?? '',
-        author: json['author'] as String?,
-        genre: json['genre'] as String?,
-        language: json['language'] as String?,
       );
 }
