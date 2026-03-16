@@ -76,15 +76,23 @@ class _MemoryHistoryRepository implements HistoryRepository {
   }
 }
 
+Future<File> _createTempImage(String name, {int bytes = 48 * 1024}) async {
+  final tmp = await Directory.systemTemp.createTemp('recon_workflow_');
+  final file = File('${tmp.path}/$name.jpg');
+  await file.writeAsBytes(List<int>.filled(bytes, 1));
+  return file;
+}
+
 void main() {
   test('workflow transitions compressed -> draftReady -> publishedSuccess', () async {
     final history = _MemoryHistoryRepository();
     final controller = WorkflowController(_FakeService(), history);
+    final image = await _createTempImage('ok');
 
     controller.setPreparedImage(
-      imagePath: '/tmp/item.jpg',
+      imagePath: image.path,
       optimization: ImageOptimizationResult(
-        file: File('/tmp/item.jpg'),
+        file: image,
         originalBytes: 120000,
         finalBytes: 48000,
         finalWidth: 1024,
@@ -119,11 +127,12 @@ void main() {
       ),
       history,
     );
+    final image = await _createTempImage('retry');
 
     controller.setPreparedImage(
-      imagePath: '/tmp/item.jpg',
+      imagePath: image.path,
       optimization: ImageOptimizationResult(
-        file: File('/tmp/item.jpg'),
+        file: image,
         originalBytes: 120000,
         finalBytes: 48000,
         finalWidth: 1024,
@@ -150,11 +159,12 @@ void main() {
       ),
       _MemoryHistoryRepository(),
     );
+    final image = await _createTempImage('network');
 
     controller.setPreparedImage(
-      imagePath: '/tmp/item.jpg',
+      imagePath: image.path,
       optimization: ImageOptimizationResult(
-        file: File('/tmp/item.jpg'),
+        file: image,
         originalBytes: 120000,
         finalBytes: 48000,
         finalWidth: 1024,
@@ -167,5 +177,27 @@ void main() {
     final analyzed = await controller.analyze();
     expect(analyzed, isFalse);
     expect(controller.state.error, contains('Sin conexión'));
+  });
+
+  test('analyze fails before request when image does not exist', () async {
+    final controller = WorkflowController(_FakeService(), _MemoryHistoryRepository());
+    final missing = File('${Directory.systemTemp.path}/missing-${DateTime.now().microsecondsSinceEpoch}.jpg');
+
+    controller.setPreparedImage(
+      imagePath: missing.path,
+      optimization: ImageOptimizationResult(
+        file: missing,
+        originalBytes: 120000,
+        finalBytes: 48000,
+        finalWidth: 1024,
+        finalHeight: 1024,
+        targetReached: true,
+        attempts: 3,
+      ),
+    );
+
+    final analyzed = await controller.analyze();
+    expect(analyzed, isFalse);
+    expect(controller.state.error, contains('no existe'));
   });
 }

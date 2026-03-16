@@ -66,24 +66,24 @@ class WorkflowState {
 
   WorkflowState copyWith({
     WorkflowStep? step,
-    String? imagePath,
-    ImageOptimizationResult? optimization,
-    String? draftId,
-    String? imageUrl,
-    AnalyzedItem? analyzedItem,
-    PublishedItem? publishedItem,
+    Object? imagePath = _noValue,
+    Object? optimization = _noValue,
+    Object? draftId = _noValue,
+    Object? imageUrl = _noValue,
+    Object? analyzedItem = _noValue,
+    Object? publishedItem = _noValue,
     bool? isLoading,
     String? error,
     Object? confirmRetryBlockedUntil = _noValue,
   }) {
     return WorkflowState(
       step: step ?? this.step,
-      imagePath: imagePath ?? this.imagePath,
-      optimization: optimization ?? this.optimization,
-      draftId: draftId ?? this.draftId,
-      imageUrl: imageUrl ?? this.imageUrl,
-      analyzedItem: analyzedItem ?? this.analyzedItem,
-      publishedItem: publishedItem ?? this.publishedItem,
+      imagePath: imagePath == _noValue ? this.imagePath : imagePath as String?,
+      optimization: optimization == _noValue ? this.optimization : optimization as ImageOptimizationResult?,
+      draftId: draftId == _noValue ? this.draftId : draftId as String?,
+      imageUrl: imageUrl == _noValue ? this.imageUrl : imageUrl as String?,
+      analyzedItem: analyzedItem == _noValue ? this.analyzedItem : analyzedItem as AnalyzedItem?,
+      publishedItem: publishedItem == _noValue ? this.publishedItem : publishedItem as PublishedItem?,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       confirmRetryBlockedUntil: confirmRetryBlockedUntil == _noValue
@@ -152,8 +152,16 @@ class WorkflowController extends StateNotifier<WorkflowState> {
 
   Future<bool> analyze() async {
     if (state.imagePath == null || state.optimization == null) return false;
-    if (state.optimization!.finalBytes > analyzeEndpointMaxBytes) {
-      state = state.copyWith(step: WorkflowStep.failure, error: 'La imagen final supera 100 KB.');
+
+    final imageFile = File(state.imagePath!);
+    if (!await imageFile.exists()) {
+      state = state.copyWith(step: WorkflowStep.failure, isLoading: false, error: 'La imagen seleccionada no existe. Vuelve a capturarla.');
+      return false;
+    }
+
+    final fileBytes = await imageFile.length();
+    if (fileBytes > analyzeEndpointMaxBytes || state.optimization!.finalBytes > analyzeEndpointMaxBytes) {
+      state = state.copyWith(step: WorkflowStep.failure, isLoading: false, error: 'La imagen final supera 100 KB.');
       return false;
     }
 

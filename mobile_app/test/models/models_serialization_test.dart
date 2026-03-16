@@ -58,7 +58,10 @@ void main() {
     final copy = result.copyWith(message: 'updated');
     expect(copy.message, 'updated');
 
-    final parsed = ProcessResult.fromJson(result.toJson());
+    final json = result.toJson();
+    expect(json['schema_version'], ProcessResult.schemaVersion);
+
+    final parsed = ProcessResult.fromJson(json);
     expect(parsed.success, isTrue);
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 
@@ -22,8 +23,21 @@ class HttpItemRemoteDataSource implements ItemRemoteDataSource {
     AppLogger.info('Analyze request started imagePath=$imagePath', tag: 'WORKFLOW');
     try {
       final response = await _retryAnalyze(() async {
+        final imageFile = File(imagePath);
+        final filename = imageFile.uri.pathSegments.isNotEmpty ? imageFile.uri.pathSegments.last : 'image.jpg';
+        final ext = filename.contains('.') ? filename.split('.').last.toLowerCase() : '';
+        final contentType = switch (ext) {
+          'png' => DioMediaType('image', 'png'),
+          'webp' => DioMediaType('image', 'webp'),
+          _ => DioMediaType('image', 'jpeg'),
+        };
+
         final formData = FormData.fromMap({
-          'image': await MultipartFile.fromFile(imagePath),
+          'image': await MultipartFile.fromFile(
+            imagePath,
+            filename: filename,
+            contentType: contentType,
+          ),
         });
         return _dio.post<Map<String, dynamic>>('/api/items/analyze', data: formData);
       });
