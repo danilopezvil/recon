@@ -12,6 +12,7 @@ import '../../../domain/models/analyzed_item.dart';
 import '../../../domain/models/confirm_draft_payload.dart';
 import '../../../domain/models/process_result.dart';
 import '../../../domain/models/published_item.dart';
+import '../../../app/service_providers.dart';
 import '../../../domain/repositories/history_repository.dart';
 import '../../../domain/services/item_processing_service.dart';
 
@@ -93,20 +94,22 @@ class WorkflowState {
   }
 }
 
-class WorkflowController extends StateNotifier<WorkflowState> {
-  WorkflowController(this._service, this._history)
-      : _picker = ImagePicker(),
-        _optimizer = ImageOptimizer(),
-        super(const WorkflowState());
-
+class WorkflowController extends Notifier<WorkflowState> {
   static const int analyzeEndpointMaxBytes = 100 * 1024;
   static const validCategories = <String>{'kitchen', 'books', 'home', 'electronics', 'other'};
   static const validConditions = <String>{'new', 'like_new', 'good', 'fair', 'parts'};
 
-  final ItemProcessingService _service;
-  final HistoryRepository _history;
-  final ImagePicker _picker;
-  final ImageOptimizer _optimizer;
+  late final ItemProcessingService _service;
+  late final HistoryRepository _history;
+  final ImagePicker _picker = ImagePicker();
+  final ImageOptimizer _optimizer = ImageOptimizer();
+
+  @override
+  WorkflowState build() {
+    _service = ref.read(itemProcessingServiceProvider);
+    _history = ref.read(historyRepositoryProvider);
+    return const WorkflowState();
+  }
 
   Future<bool> pickFromCamera() => _pick(ImageSource.camera);
   Future<bool> pickFromGallery() => _pick(ImageSource.gallery);

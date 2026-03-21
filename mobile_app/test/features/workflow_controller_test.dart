@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:recon_mobile_app/app/providers.dart';
 import 'package:recon_mobile_app/core/network/api_error.dart';
 import 'package:recon_mobile_app/core/utils/image_optimizer.dart';
 import 'package:recon_mobile_app/domain/models/analyze_draft_result.dart';
@@ -83,10 +85,25 @@ Future<File> _createTempImage(String name, {int bytes = 48 * 1024}) async {
   return file;
 }
 
+ProviderContainer _makeContainer({
+  ItemProcessingService? service,
+  HistoryRepository? history,
+}) {
+  return ProviderContainer(
+    overrides: [
+      if (service != null) itemProcessingServiceProvider.overrideWithValue(service),
+      if (history != null) historyRepositoryProvider.overrideWithValue(history),
+    ],
+  );
+}
+
 void main() {
   test('workflow transitions compressed -> draftReady -> publishedSuccess', () async {
     final history = _MemoryHistoryRepository();
-    final controller = WorkflowController(_FakeService(), history);
+    final container = _makeContainer(service: _FakeService(), history: history);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workflowControllerProvider.notifier);
     final image = await _createTempImage('ok');
 
     controller.setPreparedImage(
@@ -117,16 +134,19 @@ void main() {
 
   test('publish blocks retry window when API returns rate limit', () async {
     final history = _MemoryHistoryRepository();
-    final controller = WorkflowController(
-      _FakeService(
+    final container = _makeContainer(
+      service: _FakeService(
         throwOnConfirm: const ApiException(
           'Demasiadas solicitudes. Reintenta en 30s.',
           kind: ApiErrorKind.rateLimited,
           rateLimit: RateLimitInfo(retryAfter: Duration(seconds: 30)),
         ),
       ),
-      history,
+      history: history,
     );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workflowControllerProvider.notifier);
     final image = await _createTempImage('retry');
 
     controller.setPreparedImage(
@@ -150,15 +170,18 @@ void main() {
   });
 
   test('analyze returns connectivity message on network error', () async {
-    final controller = WorkflowController(
-      _FakeService(
+    final container = _makeContainer(
+      service: _FakeService(
         throwOnAnalyze: const ApiException(
           'Sin conexión o red inestable. Verifica internet e intenta de nuevo.',
           kind: ApiErrorKind.network,
         ),
       ),
-      _MemoryHistoryRepository(),
+      history: _MemoryHistoryRepository(),
     );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workflowControllerProvider.notifier);
     final image = await _createTempImage('network');
 
     controller.setPreparedImage(
@@ -180,7 +203,13 @@ void main() {
   });
 
   test('analyze fails before request when image does not exist', () async {
-    final controller = WorkflowController(_FakeService(), _MemoryHistoryRepository());
+    final container = _makeContainer(
+      service: _FakeService(),
+      history: _MemoryHistoryRepository(),
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workflowControllerProvider.notifier);
     final missing = File('${Directory.systemTemp.path}/missing-${DateTime.now().microsecondsSinceEpoch}.jpg');
 
     controller.setPreparedImage(

@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router.dart';
-import '../../../shared/widgets/app_section.dart';
 import '../../../shared/widgets/primary_action.dart';
+import '../../../shared/widgets/step_indicator.dart';
 
 class PreviewPage extends ConsumerWidget {
   const PreviewPage({super.key});
@@ -22,32 +22,67 @@ class PreviewPage extends ConsumerWidget {
       return const Scaffold(body: Center(child: Text('No hay imagen seleccionada')));
     }
 
+    final sizeKb = ((state.imageBytes ?? 0) / 1024).toStringAsFixed(1);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Vista previa')),
+      appBar: AppBar(
+        title: const Text('Vista previa'),
+        bottom: const StepIndicator(currentStep: 1),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(File(state.imagePath!), fit: BoxFit.cover, width: double.infinity),
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppSection(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    const Text('Peso final'),
-                    Text('${((state.imageBytes ?? 0) / 1024).toStringAsFixed(1)} KB'),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.file(
+                        File(state.imagePath!),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.photo_size_select_small_rounded,
+                              color: Colors.white,
+                              size: 13,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              '$sizeKb KB',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               PrimaryAction(
-                label: 'Analizar',
+                label: 'Analizar con IA',
+                icon: Icons.auto_awesome_rounded,
                 isBusy: state.isLoading,
                 onPressed: () async {
                   final ok = await controller.analyze();

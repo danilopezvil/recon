@@ -9,7 +9,7 @@ class ApiConfig {
 
   factory ApiConfig.fromEnvironment() {
     return ApiConfig(
-      baseUrl: const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://api.example.com'),
+      baseUrl: const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://home-saledl.vercel.app'),
       bearerToken: const String.fromEnvironment('API_SECRET_KEY', defaultValue: ''),
       connectTimeout: Duration(seconds: int.fromEnvironment('API_CONNECT_TIMEOUT_SEC', defaultValue: 8)),
       receiveTimeout: Duration(seconds: int.fromEnvironment('API_RECEIVE_TIMEOUT_SEC', defaultValue: 18)),

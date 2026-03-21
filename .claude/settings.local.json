@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter pub:*)",
+      "Bash(grep -n class.*App /d/dev/flutter/recon/mobile_app/lib/main.dart /d/dev/flutter/recon/mobile_app/lib/app/app.dart)",
+      "Bash(flutter test:*)"
+    ]
+  }
+}

@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^3.3.1
   dio: ^5.6.0
   image_picker: ^1.1.2
   flutter_image_compress: ^2.3.0
@@ -21,7 +21,36 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  # Para Android 13+ (ícono adaptativo con fondo sólido)
+  adaptive_icon_background: "#111315"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  # Eliminar el ícono de fondo web si no aplica
+  web:
+    generate: false
+
+flutter_native_splash:
+  color: "#111315"
+  # Imagen centrada en la splash (opcional, puede omitirse)
+  image: assets/icon/app_icon.png
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+  # Quita la animación de splash de Flutter (pantalla blanca)
+  android_12:
+    color: "#111315"
+    image: assets/icon/app_icon.png
+    icon_background_color: "#111315"
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/

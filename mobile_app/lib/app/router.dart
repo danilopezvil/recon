@@ -6,6 +6,7 @@ import '../features/edit/presentation/manual_edit_page.dart';
 import '../features/history/presentation/history_page.dart';
 import '../features/preview/presentation/preview_page.dart';
 import '../features/publish/presentation/publish_confirmation_page.dart';
+import '../features/settings/presentation/settings_page.dart';
 
 class AppRoutes {
   static const home = '/';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const edit = '/edit';
   static const publish = '/publish';
   static const history = '/history';
+  static const settings = '/settings';
 }
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -28,6 +30,11 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (_) => const PublishConfirmationPage());
     case AppRoutes.history:
       return MaterialPageRoute(builder: (_) => const HistoryPage());
+    case AppRoutes.settings:
+      return MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const SettingsPage(),
+      );
     case AppRoutes.home:
     default:
       return MaterialPageRoute(builder: (_) => const HomeCapturePage());
